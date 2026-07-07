@@ -61,7 +61,7 @@ DAO / DAO Implementation
 MySQL 8.0
 ```
 
-![系統架構圖](docs/PuzzleGamePlatform_Architecture.png)
+![系統架構圖](PuzzleGamePlatform_Documentation/PuzzleGamePlatform_Architecture.png)
 
 ## 資料夾說明
 
@@ -95,7 +95,7 @@ docs/                   # ER Model、架構圖、流程圖及完整報告
 - `achievement`、`player_achievement`：成就資料
 - `ending`、`save_game`：結局與存檔
 
-![ER Model](docs/PuzzleGamePlatform_ERModel.png)
+![ER Model](PuzzleGamePlatform_Documentation/PuzzleGamePlatform_ERModel.png)
 
 ## 安裝與執行
 
@@ -148,10 +148,10 @@ RUN_PHASE2_WINDOWS.bat
 
 ## 專案文件
 
-- [完整專案報告](docs/PuzzleGamePlatform_Project_Report.pdf)
-- [ER Model](docs/PuzzleGamePlatform_ERModel.png)
-- [系統架構圖](docs/PuzzleGamePlatform_Architecture.png)
-- [系統流程圖](docs/PuzzleGamePlatform_Flow.png)
+- [完整專案報告](PuzzleGamePlatform_Documentation/PuzzleGamePlatform_Project_Report.pdf)
+- [ER Model](PuzzleGamePlatform_Documentation/PuzzleGamePlatform_ERModel.png)
+- [系統架構圖](PuzzleGamePlatform_Documentation/PuzzleGamePlatform_Architecture.png)
+- [系統流程圖](PuzzleGamePlatform_Documentation/PuzzleGamePlatform_Flow.png)
 
 ## 開發心得
 
