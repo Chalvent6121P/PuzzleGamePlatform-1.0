@@ -1,26 +1,38 @@
 package controller.games;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.FlowLayout;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
@@ -28,39 +40,54 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 import controller.games.common.BackpackDialog;
+import entity.Item;
 import service.impl.engine.LibraryGameEngine;
 import util.SoundPlayer;
 
+/**
+ * 《失落的圖書館》視覺型 2.5D 版本。
+ *
+ * <p>保留原本的 LibraryGameEngine、MySQL 遊戲紀錄、答題流程與返回大廳流程，
+ * 僅升級 Swing 場景呈現：</p>
+ *
+ * <ul>
+ *   <li>滑鼠視差攝影機</li>
+ *   <li>依物件深度移動的互動熱區</li>
+ *   <li>動態暖光、暗角、霧塵與地板透視線</li>
+ *   <li>物件懸停光暈、呼吸動畫與點擊波紋</li>
+ *   <li>可選用透明 PNG 前景層</li>
+ * </ul>
+ *
+ * <p>Java 11 相容，不增加 Maven 相依套件。</p>
+ */
 public class LibraryGamePage extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
-    /*
-     * 圖片放置位置：
-     *
-     * src/main/resources/images/library/library_scene.png
-     */
     private static final String BACKGROUND_PATH =
             "/images/library/library_scene.png";
 
-    /*
-     * 開發時可以改成 true。
-     *
-     * true：
-     * 顯示所有可點擊區域的紅色邊框，方便調整位置。
-     *
-     * false：
-     * 隱藏邊框，玩家只會看到遊戲背景圖。
+    /**
+     * 選用的透明 PNG 前景。
+     * 沒有此檔案也可以正常執行。
+     */
+    private static final String FOREGROUND_PATH =
+            "/images/library/layers/library_foreground.png";
+
+    /**
+     * 開發時可改為 true，顯示熱區紅框。
      */
     private static final boolean SHOW_HOTSPOT_BORDERS = false;
 
     private final LibraryGameEngine engine = new LibraryGameEngine();
 
-    private int playerNo;
-    private int recordNo;
+    private final int playerNo;
+    private final int recordNo;
     private int currentPuzzleNo;
 
     private ScenePanel scenePanel;
@@ -68,54 +95,27 @@ public class LibraryGamePage extends JFrame {
     private JTextArea messageArea;
     private JTextField inputField;
     private JButton submitButton;
-    private JButton soundButton;
 
-    /*
-     * 返回遊戲大廳時執行的動作。
-     * 使用 Runnable 可避免遊戲頁直接依賴 GameMainPage 類別。
-     */
     private final Runnable returnToLobbyAction;
-
-    /*
-     * 防止通關或關閉視窗時重複執行返回動作。
-     */
     private boolean leavingPage;
 
-    /**
-     * 測試啟動。
-     */
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
-                /*
-                 * 這個 playerNo 必須真的存在於 MySQL 的 player 表。
-                 */
                 int testPlayerNo = 1;
-
                 LibraryGamePage frame =
                         new LibraryGamePage(testPlayerNo);
-
                 frame.setVisible(true);
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
 
-    /**
-     * 供單獨測試 LibraryGamePage 使用。
-     */
     public LibraryGamePage(int playerNo) {
         this(playerNo, null);
     }
 
-    /**
-     * 正式從遊戲大廳進入時使用。
-     *
-     * @param playerNo           目前登入玩家編號
-     * @param returnToLobbyAction 遊戲結束或離開時返回大廳的動作
-     */
     public LibraryGamePage(
             int playerNo,
             Runnable returnToLobbyAction) {
@@ -130,9 +130,6 @@ public class LibraryGamePage extends JFrame {
         this.currentPuzzleNo = 0;
         this.leavingPage = false;
 
-        /*
-         * 開始新遊戲，並取得本次遊戲的 recordNo。
-         */
         this.recordNo = engine.startLibraryGame(playerNo);
 
         if (recordNo <= 0) {
@@ -145,22 +142,9 @@ public class LibraryGamePage extends JFrame {
         registerHotspots();
     }
 
-    /**
-     * JFrame 基本設定。
-     */
     private void initFrame() {
-        setTitle("失落的圖書館");
-
-        /*
-         * 不直接結束整個程式。
-         * 玩家按下視窗 X 時，先詢問是否返回遊戲大廳。
-         */
+        setTitle("失落的圖書館 - 2.5D");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-        /*
-         * 原始圖片是 1536 × 1024，比例為 3:2。
-         * 1200 × 800 也是 3:2，因此不會明顯變形。
-         */
         setSize(1200, 800);
         setMinimumSize(new Dimension(900, 600));
         setLocationRelativeTo(null);
@@ -170,33 +154,84 @@ public class LibraryGamePage extends JFrame {
             public void windowClosing(WindowEvent event) {
                 handleWindowClosing();
             }
+
+            @Override
+            public void windowClosed(WindowEvent event) {
+                if (scenePanel != null) {
+                    scenePanel.stopAnimation();
+                }
+            }
         });
     }
 
-    /**
-     * 建立背景、訊息區及輸入區。
-     */
     private void initComponents() {
         BufferedImage backgroundImage =
-                loadBackgroundImage(BACKGROUND_PATH);
+                loadRequiredImage(BACKGROUND_PATH);
 
-        scenePanel = new ScenePanel(backgroundImage);
+        BufferedImage foregroundImage =
+                loadOptionalImage(FOREGROUND_PATH);
+
+        scenePanel = new ScenePanel(
+                backgroundImage,
+                foregroundImage
+        );
 
         setContentPane(scenePanel);
 
-        JPanel hudPanel = createHudPanel();
+        scenePanel.setHudPanel(createHudPanel());
+        scenePanel.setTitlePanel(createTitlePanel());
+        scenePanel.setControlPanel(createControlPanel());
 
-        /*
-         * 將訊息區放到圖片的上層。
-         */
-        scenePanel.setHudPanel(hudPanel);
-
-        showMessage("你被困在圖書館裡，請點擊房間中的物品尋找線索。");
+        showMessage(
+                "你被困在圖書館裡。\n"
+              + "移動滑鼠觀察空間深度，點擊房間中的物品尋找線索。"
+        );
     }
 
-    /**
-     * 建立右下角半透明操作介面。
-     */
+    private JPanel createTitlePanel() {
+        JPanel titlePanel = new JPanel(new BorderLayout(4, 1)) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = createQualityGraphics(g);
+
+                g2.setColor(new Color(8, 7, 8, 182));
+                g2.fillRoundRect(
+                        0, 0, getWidth(), getHeight(), 18, 18);
+
+                g2.setColor(new Color(214, 174, 96, 165));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.drawRoundRect(
+                        1, 1,
+                        Math.max(0, getWidth() - 3),
+                        Math.max(0, getHeight() - 3),
+                        18, 18
+                );
+
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+
+        titlePanel.setOpaque(false);
+        titlePanel.setBorder(new EmptyBorder(8, 14, 8, 14));
+
+        JTextArea title = new JTextArea(
+                "失落的圖書館\n"
+              + "THE LOST LIBRARY");
+        title.setEditable(false);
+        title.setFocusable(false);
+        title.setOpaque(false);
+        title.setForeground(new Color(244, 220, 167));
+        title.setFont(new Font(
+                "Microsoft JhengHei", Font.BOLD, 15));
+
+        titlePanel.add(title, BorderLayout.CENTER);
+        return titlePanel;
+    }
+
     private JPanel createHudPanel() {
         JPanel hudPanel = new JPanel(new BorderLayout(8, 8)) {
 
@@ -204,29 +239,29 @@ public class LibraryGamePage extends JFrame {
 
             @Override
             protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
+                Graphics2D g2 = createQualityGraphics(g);
 
-                g2.setRenderingHint(
-                        RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON
+                GradientPaint gradient = new GradientPaint(
+                        0, 0,
+                        new Color(18, 14, 13, 225),
+                        0, getHeight(),
+                        new Color(7, 8, 12, 218)
                 );
 
-                /*
-                 * 半透明深色背景。
-                 */
-                g2.setColor(new Color(15, 10, 7, 160));
-
+                g2.setPaint(gradient);
                 g2.fillRoundRect(
-                        0,
-                        0,
-                        getWidth(),
-                        getHeight(),
-                        22,
-                        22
+                        0, 0, getWidth(), getHeight(), 24, 24);
+
+                g2.setColor(new Color(226, 186, 103, 150));
+                g2.setStroke(new BasicStroke(1.3f));
+                g2.drawRoundRect(
+                        1, 1,
+                        Math.max(0, getWidth() - 3),
+                        Math.max(0, getHeight() - 3),
+                        24, 24
                 );
 
                 g2.dispose();
-
                 super.paintComponent(g);
             }
         };
@@ -234,36 +269,18 @@ public class LibraryGamePage extends JFrame {
         hudPanel.setOpaque(false);
         hudPanel.setBorder(new EmptyBorder(12, 14, 12, 14));
 
-        JPanel toolPanel = new JPanel(new BorderLayout(8, 0));
-        toolPanel.setOpaque(false);
-
-        JButton backpackButton = new JButton("背包");
-        backpackButton.setFont(new Font("Microsoft JhengHei", Font.BOLD, 13));
-        backpackButton.addActionListener(e -> openBackpack());
-        toolPanel.add(backpackButton, BorderLayout.WEST);
-
-        soundButton = new JButton(soundButtonText());
-        soundButton.setFont(new Font("Microsoft JhengHei", Font.BOLD, 13));
-        soundButton.addActionListener(e -> toggleSound());
-        toolPanel.add(soundButton, BorderLayout.EAST);
-
-        hudPanel.add(toolPanel, BorderLayout.NORTH);
-
         messageArea = new JTextArea();
         messageArea.setEditable(false);
         messageArea.setFocusable(false);
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
         messageArea.setOpaque(false);
-
         messageArea.setForeground(new Color(244, 226, 183));
-        messageArea.setFont(
-                new Font("Microsoft JhengHei", Font.PLAIN, 16)
-        );
+        messageArea.setFont(new Font(
+                "Microsoft JhengHei", Font.PLAIN, 16));
 
         JScrollPane messageScrollPane =
                 new JScrollPane(messageArea);
-
         messageScrollPane.setBorder(null);
         messageScrollPane.setOpaque(false);
         messageScrollPane.getViewport().setOpaque(false);
@@ -272,24 +289,12 @@ public class LibraryGamePage extends JFrame {
         inputPanel.setOpaque(false);
 
         inputField = new JTextField();
-        inputField.setFont(
-                new Font("Microsoft JhengHei", Font.PLAIN, 16)
-        );
-
-        /*
-         * 一開始沒有需要輸入答案的謎題。
-         */
+        inputField.setFont(new Font(
+                "Microsoft JhengHei", Font.PLAIN, 16));
         inputField.setEnabled(false);
-
-        /*
-         * 在輸入框按 Enter，也可以送出答案。
-         */
         inputField.addActionListener(e -> handleSubmit());
 
-        submitButton = new JButton("輸入答案");
-        submitButton.setFont(
-                new Font("Microsoft JhengHei", Font.BOLD, 14)
-        );
+        submitButton = createGoldButton("輸入答案");
         submitButton.setEnabled(false);
         submitButton.addActionListener(e -> handleSubmit());
 
@@ -302,186 +307,200 @@ public class LibraryGamePage extends JFrame {
         return hudPanel;
     }
 
+    private JPanel createControlPanel() {
+        JPanel controlPanel = new JPanel(new FlowLayout(
+                FlowLayout.RIGHT, 10, 0));
+        controlPanel.setOpaque(false);
+
+        JButton backpackButton = createSceneControlButton("背包");
+        backpackButton.setToolTipText("開啟背包");
+        backpackButton.addActionListener(event -> openBackpack());
+
+        JButton returnButton = createSceneControlButton("返回大廳");
+        returnButton.setToolTipText("離開遊戲並返回大廳");
+        returnButton.addActionListener(event -> handleWindowClosing());
+
+        controlPanel.add(backpackButton);
+        controlPanel.add(returnButton);
+        return controlPanel;
+    }
+
+    private JButton createSceneControlButton(String text) {
+        JButton button = new JButton(text) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g2 = createQualityGraphics(graphics);
+                g2.setColor(new Color(8, 7, 8, 210));
+                g2.fillRoundRect(
+                        0, 0, getWidth(), getHeight(), 22, 22);
+                g2.setColor(new Color(226, 186, 103, 205));
+                g2.setStroke(new BasicStroke(1.4f));
+                g2.drawRoundRect(
+                        1, 1,
+                        Math.max(0, getWidth() - 3),
+                        Math.max(0, getHeight() - 3),
+                        22, 22);
+                g2.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+
+        button.setUI(new BasicButtonUI());
+        button.setFont(new Font(
+                "Microsoft JhengHei", Font.BOLD, 14));
+        button.setForeground(new Color(244, 226, 183));
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(
+                Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(
+                "返回大廳".equals(text) ? 112 : 82, 44));
+        return button;
+    }
+
+    private void openBackpack() {
+        try {
+            SoundPlayer.play("/sounds/bag_open.wav");
+            List<Item> items = engine.getInventoryItems(recordNo);
+            BackpackDialog dialog = new BackpackDialog(
+                    this, items, new Color(211, 172, 91));
+            dialog.setVisible(true);
+        } catch (RuntimeException exception) {
+            showMessage(
+                    "背包讀取失敗："
+                  + safeMessage(exception));
+        }
+    }
+
+    private static String safeMessage(Throwable error) {
+        if (error == null || error.getMessage() == null
+                || error.getMessage().trim().isEmpty()) {
+            return "未知錯誤";
+        }
+        return error.getMessage();
+    }
+
+    private JButton createGoldButton(String text) {
+        JButton button = new JButton(text);
+        button.setUI(new BasicButtonUI());
+        button.setFont(new Font(
+                "Microsoft JhengHei", Font.BOLD, 14));
+        button.setForeground(new Color(25, 20, 15));
+        button.setBackground(new Color(211, 172, 91));
+        button.setOpaque(true);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(
+                        new Color(247, 214, 143), 1),
+                new EmptyBorder(7, 12, 7, 12)
+        ));
+        button.setCursor(Cursor.getPredefinedCursor(
+                Cursor.HAND_CURSOR));
+        return button;
+    }
+
     /**
-     * 註冊圖片中的所有可點擊熱區。
-     *
-     * x、y、width、height 都是比例：
-     *
-     * 0.20 = 圖片寬度的 20%
-     *
-     * 因此畫面縮放後，熱區也會跟著縮放。
+     * depth：0.0 代表較遠；1.0 代表較靠近玩家。
      */
     private void registerHotspots() {
-
-        /*
-         * =========================================================
-         * 第一個提示：桌上的泛黃便條紙
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "泛黃便條紙",
-                0.105,
-                0.750,
-                0.245,
-                0.175,
+                0.105, 0.750, 0.245, 0.175,
+                0.95,
                 this::handleClueNote
         );
 
-        /*
-         * =========================================================
-         * 正確書籍：書架上的藍色百科全書
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "藍色百科全書",
-                0.197,
-                0.205,
-                0.035,
-                0.110,
+                0.197, 0.205, 0.035, 0.110,
+                0.30,
                 this::handleEncyclopedia
         );
 
-        /*
-         * =========================================================
-         * 干擾書籍
-         *
-         * 點擊後只顯示書名，不提供提示。
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "西方史綱",
-                0.030,
-                0.215,
-                0.030,
-                0.100,
+                0.030, 0.215, 0.030, 0.100,
+                0.28,
                 () -> showBookName("《西方史綱》")
         );
 
         scenePanel.addHotspot(
                 "古代王朝",
-                0.075,
-                0.215,
-                0.030,
-                0.100,
+                0.075, 0.215, 0.030, 0.100,
+                0.28,
                 () -> showBookName("《古代王朝》")
         );
 
         scenePanel.addHotspot(
                 "地理誌",
-                0.250,
-                0.215,
-                0.030,
-                0.100,
+                0.250, 0.215, 0.030, 0.100,
+                0.28,
                 () -> showBookName("《世界地理誌》")
         );
 
         scenePanel.addHotspot(
                 "星象手冊",
-                0.340,
-                0.215,
-                0.030,
-                0.100,
+                0.340, 0.215, 0.030, 0.100,
+                0.28,
                 () -> showBookName("《星象觀測手冊》")
         );
 
         scenePanel.addHotspot(
                 "植物圖鑑",
-                0.025,
-                0.355,
-                0.032,
-                0.105,
+                0.025, 0.355, 0.032, 0.105,
+                0.38,
                 () -> showBookName("《古典植物圖鑑》")
         );
 
         scenePanel.addHotspot(
                 "哲學論集",
-                0.350,
-                0.355,
-                0.032,
-                0.105,
+                0.350, 0.355, 0.032, 0.105,
+                0.38,
                 () -> showBookName("《沉思與哲學論集》")
         );
 
-        /*
-         * =========================================================
-         * 古董時鐘
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "古董時鐘",
-                0.475,
-                0.045,
-                0.125,
-                0.545,
+                0.475, 0.045, 0.125, 0.545,
+                0.42,
                 this::handleClock
         );
 
-        /*
-         * =========================================================
-         * 地球儀
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "地球儀",
-                0.655,
-                0.285,
-                0.150,
-                0.240,
+                0.655, 0.285, 0.150, 0.240,
+                0.58,
                 this::handleGlobe
         );
 
-        /*
-         * =========================================================
-         * 地球儀下方的抽屜櫃
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "抽屜",
-                0.625,
-                0.500,
-                0.185,
-                0.235,
+                0.625, 0.500, 0.185, 0.235,
+                0.78,
                 this::handleDrawer
         );
 
-        /*
-         * =========================================================
-         * 桌面左側密碼盒
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "密碼盒",
-                0.105,
-                0.625,
-                0.140,
-                0.155,
+                0.105, 0.625, 0.140, 0.155,
+                0.88,
                 this::handlePasswordBox
         );
 
-        /*
-         * =========================================================
-         * 出口門
-         * =========================================================
-         */
         scenePanel.addHotspot(
                 "出口門",
-                0.855,
-                0.045,
-                0.140,
-                0.710,
+                0.855, 0.045, 0.140, 0.710,
+                0.45,
                 this::handleExitDoor
         );
     }
 
-    /**
-     * 點擊桌面泛黃便條紙。
-     *
-     * 目前使用 engine 的 bookShelf 動作來取得 ITEM_NOTE，
-     * 但畫面顯示的是桌上的實際提示內容。
-     */
     private void handleClueNote() {
         engine.clickObject(recordNo, "bookShelf");
-        SoundPlayer.play("/sounds/paper_open.wav");
 
         showMessage(
                 "泛黃便條紙：\n"
@@ -490,11 +509,7 @@ public class LibraryGamePage extends JFrame {
         );
     }
 
-    /**
-     * 點擊藍色百科全書。
-     */
     private void handleEncyclopedia() {
-        SoundPlayer.play("/sounds/book_open.wav");
         activatePuzzleInput(
                 1,
                 "你取出了藍色百科全書。\n"
@@ -502,44 +517,19 @@ public class LibraryGamePage extends JFrame {
         );
     }
 
-    /**
-     * 點擊時鐘。
-     */
     private void handleClock() {
-        SoundPlayer.play("/sounds/clock_chime.wav");
-        String result =
-                engine.clickObject(recordNo, "clock");
-
-        showMessage(result);
+        showMessage(engine.clickObject(recordNo, "clock"));
     }
 
-    /**
-     * 點擊地球儀。
-     */
     private void handleGlobe() {
-        SoundPlayer.play("/sounds/gear_turn.wav");
-        String result =
-                engine.clickObject(recordNo, "globe");
-
-        showMessage(result);
+        showMessage(engine.clickObject(recordNo, "globe"));
     }
 
-    /**
-     * 點擊抽屜。
-     */
     private void handleDrawer() {
-        SoundPlayer.play("/sounds/drawer_open.wav");
-        String result =
-                engine.clickObject(recordNo, "drawer");
-
-        showMessage(result);
+        showMessage(engine.clickObject(recordNo, "drawer"));
     }
 
-    /**
-     * 點擊密碼盒。
-     */
     private void handlePasswordBox() {
-        SoundPlayer.play("/sounds/box_click.wav");
         activatePuzzleInput(
                 2,
                 "密碼盒需要四位數密碼。\n"
@@ -547,15 +537,11 @@ public class LibraryGamePage extends JFrame {
         );
     }
 
-    /**
-     * 點擊出口門。
-     */
     private void handleExitDoor() {
         String result =
                 engine.clickObject(recordNo, "exitDoor");
 
         if ("CLEAR".equals(result)) {
-            SoundPlayer.play("/sounds/door_unlock.wav");
             JOptionPane.showMessageDialog(
                     this,
                     "你成功逃出失落的圖書館！",
@@ -570,9 +556,6 @@ public class LibraryGamePage extends JFrame {
         showMessage(result);
     }
 
-    /**
-     * 玩家按下視窗右上角 X 時，詢問是否離開遊戲並返回大廳。
-     */
     private void handleWindowClosing() {
         int choice = JOptionPane.showConfirmDialog(
                 this,
@@ -588,15 +571,17 @@ public class LibraryGamePage extends JFrame {
         }
     }
 
-    /**
-     * 關閉目前遊戲頁，並重新顯示原本的遊戲大廳。
-     */
     private void returnToLobby() {
         if (leavingPage) {
             return;
         }
 
         leavingPage = true;
+
+        if (scenePanel != null) {
+            scenePanel.stopAnimation();
+        }
+
         dispose();
 
         if (returnToLobbyAction != null) {
@@ -604,18 +589,10 @@ public class LibraryGamePage extends JFrame {
         }
     }
 
-    /**
-     * 點擊干擾書籍。
-     *
-     * 只顯示書名，不呼叫 Engine，也不提供提示。
-     */
     private void showBookName(String bookName) {
         showMessage(bookName);
     }
 
-    /**
-     * 送出謎題答案。
-     */
     private void handleSubmit() {
         if (currentPuzzleNo == 0) {
             showMessage("目前沒有需要輸入答案的謎題。");
@@ -638,30 +615,16 @@ public class LibraryGamePage extends JFrame {
 
         showMessage(result);
 
-        /*
-         * 答案正確時關閉輸入模式。
-         *
-         * 目前 Engine 回傳文字，因此先用文字判斷。
-         * 之後也可以改成 GameActionResult 物件。
-         */
-        boolean solved = result.startsWith("你翻到第 815 頁")
-                || result.startsWith("密碼盒打開了");
+        if (!result.contains("錯誤")
+                && !result.contains("沒有這個謎題")) {
 
-        if (solved) {
-            SoundPlayer.play(currentPuzzleNo == 2
-                    ? "/sounds/box_open.wav"
-                    : "/sounds/correct_answer.wav");
             deactivatePuzzleInput();
         } else {
-            SoundPlayer.play("/sounds/wrong_answer.wav");
             inputField.selectAll();
             inputField.requestFocusInWindow();
         }
     }
 
-    /**
-     * 開啟答案輸入模式。
-     */
     private void activatePuzzleInput(
             int puzzleNo,
             String message) {
@@ -670,16 +633,12 @@ public class LibraryGamePage extends JFrame {
 
         inputField.setEnabled(true);
         submitButton.setEnabled(true);
-
         inputField.setText("");
         inputField.requestFocusInWindow();
 
         showMessage(message);
     }
 
-    /**
-     * 關閉答案輸入模式。
-     */
     private void deactivatePuzzleInput() {
         currentPuzzleNo = 0;
 
@@ -688,289 +647,632 @@ public class LibraryGamePage extends JFrame {
         submitButton.setEnabled(false);
     }
 
-    /**
-     * 更新訊息區。
-     */
     private void showMessage(String message) {
         messageArea.setText(message);
         messageArea.setCaretPosition(0);
-    }
 
-    private void openBackpack() {
-        try {
-            SoundPlayer.play("/sounds/bag_open.wav");
-            BackpackDialog dialog = new BackpackDialog(
-                    this,
-                    engine.getInventoryItems(recordNo),
-                    new Color(190, 150, 88));
-            dialog.setVisible(true);
-        } catch (RuntimeException ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "讀取背包失敗：\n" + ex.getMessage(),
-                    "背包錯誤",
-                    JOptionPane.ERROR_MESSAGE);
+        if (scenePanel != null) {
+            scenePanel.pulseHud();
         }
     }
 
-    private void toggleSound() {
-        boolean enabled = SoundPlayer.toggleEnabled();
-        soundButton.setText(soundButtonText());
-        if (enabled) {
-            SoundPlayer.play("/sounds/item_select.wav");
+    private BufferedImage loadRequiredImage(String path) {
+        BufferedImage image = loadImage(path);
+
+        if (image == null) {
+            throw new IllegalStateException(
+                    "找不到或無法讀取背景圖片：" + path
+                  + "\n請確認圖片位於 "
+                  + "src/main/resources/images/library/"
+            );
         }
+
+        return image;
     }
 
-    private String soundButtonText() {
-        return SoundPlayer.isEnabled() ? "音效：開" : "音效：關";
+    private BufferedImage loadOptionalImage(String path) {
+        return loadImage(path);
     }
 
-    /**
-     * 從 Maven resources 載入圖片。
-     */
-    private BufferedImage loadBackgroundImage(String path) {
+    private BufferedImage loadImage(String path) {
         try (InputStream inputStream =
                      getClass().getResourceAsStream(path)) {
 
             if (inputStream == null) {
-                throw new IllegalStateException(
-                        "找不到背景圖片：" + path
-                      + "\n請確認圖片位於 "
-                      + "src/main/resources/images/library/"
-                );
+                return null;
             }
 
-            BufferedImage image = ImageIO.read(inputStream);
-
-            if (image == null) {
-                throw new IllegalStateException(
-                        "圖片格式無法讀取：" + path
-                );
-            }
-
-            return image;
+            return ImageIO.read(inputStream);
 
         } catch (IOException e) {
-            throw new IllegalStateException(
-                    "讀取背景圖片失敗：" + path,
-                    e
-            );
+            return null;
         }
     }
 
+    private static Graphics2D createQualityGraphics(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+
+        g2.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(
+                RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(
+                RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(
+                RenderingHints.KEY_TEXT_ANTIALIASING,
+                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        return g2;
+    }
+
     /**
-     * 顯示背景圖片並管理點擊熱區。
+     * 2.5D 場景面板。
      */
-    private static class ScenePanel extends JLayeredPane {
+    private static final class ScenePanel extends JLayeredPane {
 
         private static final long serialVersionUID = 1L;
 
         private final BufferedImage backgroundImage;
+        private final BufferedImage foregroundImage;
         private final List<HotspotSpec> hotspots =
                 new ArrayList<>();
+        private final List<DustParticle> dustParticles =
+                new ArrayList<>();
+
+        private final Timer animationTimer;
+        private final ForegroundOverlay foregroundOverlay;
 
         private JPanel hudPanel;
+        private JPanel titlePanel;
+        private JPanel controlPanel;
 
-        public ScenePanel(BufferedImage backgroundImage) {
+        private double targetCameraX;
+        private double targetCameraY;
+        private double cameraX;
+        private double cameraY;
+        private double lightPhase;
+        private double hudPulse;
+
+        ScenePanel(
+                BufferedImage backgroundImage,
+                BufferedImage foregroundImage) {
+
             this.backgroundImage = backgroundImage;
+            this.foregroundImage = foregroundImage;
 
             setLayout(null);
             setOpaque(true);
             setBackground(Color.BLACK);
+
+            createDustParticles();
+
+            foregroundOverlay = new ForegroundOverlay();
+            add(foregroundOverlay, JLayeredPane.MODAL_LAYER);
+
+            addMouseMotionListener(new MouseMotionAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent event) {
+                    updateCameraTarget(event.getPoint());
+                }
+
+                @Override
+                public void mouseDragged(MouseEvent event) {
+                    updateCameraTarget(event.getPoint());
+                }
+            });
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseExited(MouseEvent event) {
+                    targetCameraX = 0.0;
+                    targetCameraY = 0.0;
+                }
+            });
+
+            animationTimer = new Timer(33, event -> animateScene());
+            animationTimer.start();
         }
 
-        /**
-         * 設定右下角 HUD。
-         */
-        public void setHudPanel(JPanel hudPanel) {
+        void setHudPanel(JPanel hudPanel) {
             this.hudPanel = hudPanel;
-
-            add(
-                    hudPanel,
-                    JLayeredPane.MODAL_LAYER
-            );
+            add(hudPanel, JLayeredPane.POPUP_LAYER);
         }
 
-        /**
-         * 加入圖片點擊熱區。
-         */
-        public void addHotspot(
+        void setTitlePanel(JPanel titlePanel) {
+            this.titlePanel = titlePanel;
+            add(titlePanel, JLayeredPane.POPUP_LAYER);
+        }
+
+        void setControlPanel(JPanel controlPanel) {
+            this.controlPanel = controlPanel;
+            add(controlPanel, JLayeredPane.POPUP_LAYER);
+        }
+
+        void addHotspot(
                 String accessibleName,
                 double x,
                 double y,
                 double width,
                 double height,
+                double depth,
                 Runnable action) {
 
-            JButton hotspotButton = createHotspotButton(
-                    accessibleName,
-                    action
+            HotspotButton button =
+                    new HotspotButton(accessibleName, action);
+
+            HotspotSpec spec = new HotspotSpec(
+                    button,
+                    x, y, width, height,
+                    clamp(depth, 0.0, 1.0)
             );
 
-            hotspots.add(
-                    new HotspotSpec(
-                            hotspotButton,
-                            x,
-                            y,
-                            width,
-                            height
-                    )
-            );
-
-            add(
-                    hotspotButton,
-                    JLayeredPane.PALETTE_LAYER
-            );
+            hotspots.add(spec);
+            add(button, JLayeredPane.PALETTE_LAYER);
 
             revalidate();
             repaint();
         }
 
-        /**
-         * 建立透明按鈕。
-         */
-        private JButton createHotspotButton(
-                String accessibleName,
-                Runnable action) {
-
-            JButton button = new JButton();
-
-            button.setName(accessibleName);
-            button.getAccessibleContext()
-                    .setAccessibleName(accessibleName);
-
-            button.setCursor(
-                    Cursor.getPredefinedCursor(
-                            Cursor.HAND_CURSOR
-                    )
-            );
-
-            button.setContentAreaFilled(false);
-            button.setFocusPainted(false);
-            button.setOpaque(false);
-            button.setFocusable(false);
-
-            if (SHOW_HOTSPOT_BORDERS) {
-                button.setBorder(
-                        BorderFactory.createLineBorder(
-                                Color.RED,
-                                2
-                        )
-                );
-                button.setBorderPainted(true);
-            } else {
-                button.setBorderPainted(false);
-            }
-
-            button.addActionListener(e -> action.run());
-
-            return button;
+        void pulseHud() {
+            hudPulse = 1.0;
         }
 
-        /**
-         * 繪製背景圖片。
-         */
+        void stopAnimation() {
+            animationTimer.stop();
+        }
+
+        private void updateCameraTarget(Point point) {
+            if (getWidth() <= 0 || getHeight() <= 0) {
+                return;
+            }
+
+            targetCameraX =
+                    clamp(
+                            (point.x / (double) getWidth() - 0.5) * 2.0,
+                            -1.0,
+                            1.0
+                    );
+
+            targetCameraY =
+                    clamp(
+                            (point.y / (double) getHeight() - 0.5) * 2.0,
+                            -1.0,
+                            1.0
+                    );
+        }
+
+        private void animateScene() {
+            cameraX += (targetCameraX - cameraX) * 0.075;
+            cameraY += (targetCameraY - cameraY) * 0.075;
+            lightPhase += 0.045;
+            hudPulse = Math.max(0.0, hudPulse - 0.055);
+
+            for (HotspotSpec hotspot : hotspots) {
+                hotspot.button.advanceAnimation();
+            }
+
+            revalidate();
+            repaint();
+        }
+
+        private void createDustParticles() {
+            Random random = new Random(2507L);
+
+            for (int i = 0; i < 42; i++) {
+                dustParticles.add(new DustParticle(
+                        random.nextDouble(),
+                        random.nextDouble(),
+                        0.8 + random.nextDouble() * 2.1,
+                        random.nextDouble() * Math.PI * 2.0,
+                        0.25 + random.nextDouble() * 0.75
+                ));
+            }
+        }
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
             Rectangle imageBounds = getImageBounds();
 
-            Graphics2D g2 = (Graphics2D) g.create();
+            if (imageBounds.width <= 0
+                    || imageBounds.height <= 0) {
+                return;
+            }
 
-            g2.setRenderingHint(
-                    RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_BILINEAR
-            );
+            Graphics2D g2 = createQualityGraphics(g);
 
-            g2.setRenderingHint(
-                    RenderingHints.KEY_RENDERING,
-                    RenderingHints.VALUE_RENDER_QUALITY
-            );
+            Rectangle cameraBounds =
+                    getCameraImageBounds(imageBounds, 0.028);
 
             g2.drawImage(
                     backgroundImage,
-                    imageBounds.x,
-                    imageBounds.y,
-                    imageBounds.width,
-                    imageBounds.height,
+                    cameraBounds.x,
+                    cameraBounds.y,
+                    cameraBounds.width,
+                    cameraBounds.height,
                     null
             );
+
+            paintDepthWash(g2, imageBounds);
+            paintPerspectiveFloor(g2, imageBounds);
+            paintLightPools(g2, imageBounds);
+            paintDust(g2, imageBounds);
+            paintVignette(g2, imageBounds);
 
             g2.dispose();
         }
 
-        /**
-         * 根據背景圖片位置配置所有熱區。
-         */
+        private void paintDepthWash(
+                Graphics2D g2,
+                Rectangle imageBounds) {
+
+            GradientPaint verticalShade = new GradientPaint(
+                    imageBounds.x,
+                    imageBounds.y,
+                    new Color(9, 13, 24, 92),
+                    imageBounds.x,
+                    imageBounds.y + imageBounds.height,
+                    new Color(83, 48, 24, 18)
+            );
+
+            g2.setPaint(verticalShade);
+            g2.fillRect(
+                    imageBounds.x,
+                    imageBounds.y,
+                    imageBounds.width,
+                    imageBounds.height
+            );
+        }
+
+        private void paintPerspectiveFloor(
+                Graphics2D g2,
+                Rectangle imageBounds) {
+
+            int vanishX = imageBounds.x
+                    + (int) Math.round(imageBounds.width * 0.56);
+            int vanishY = imageBounds.y
+                    + (int) Math.round(imageBounds.height * 0.53);
+            int bottomY = imageBounds.y + imageBounds.height;
+
+            g2.setStroke(new BasicStroke(1.0f));
+            g2.setColor(new Color(220, 176, 103, 24));
+
+            for (int i = -7; i <= 7; i++) {
+                int bottomX = vanishX
+                        + (int) Math.round(
+                                i * imageBounds.width * 0.105);
+
+                g2.drawLine(
+                        vanishX,
+                        vanishY,
+                        bottomX,
+                        bottomY
+                );
+            }
+
+            for (int i = 1; i <= 7; i++) {
+                double t = i / 7.0;
+                double curved = t * t;
+                int y = vanishY
+                        + (int) Math.round(
+                                (bottomY - vanishY) * curved);
+
+                int halfWidth = (int) Math.round(
+                        imageBounds.width * 0.60 * curved);
+
+                g2.drawLine(
+                        vanishX - halfWidth,
+                        y,
+                        vanishX + halfWidth,
+                        y
+                );
+            }
+        }
+
+        private void paintLightPools(
+                Graphics2D g2,
+                Rectangle imageBounds) {
+
+            double pulse =
+                    0.80 + Math.sin(lightPhase) * 0.10;
+
+            drawSoftLight(
+                    g2,
+                    imageBounds,
+                    0.535, 0.260,
+                    0.190 * pulse,
+                    new Color(255, 196, 92),
+                    42
+            );
+
+            drawSoftLight(
+                    g2,
+                    imageBounds,
+                    0.720, 0.435,
+                    0.135,
+                    new Color(196, 154, 82),
+                    28
+            );
+
+            drawSoftLight(
+                    g2,
+                    imageBounds,
+                    0.180, 0.760,
+                    0.150,
+                    new Color(240, 183, 104),
+                    22
+            );
+        }
+
+        private void drawSoftLight(
+                Graphics2D g2,
+                Rectangle imageBounds,
+                double normalizedX,
+                double normalizedY,
+                double normalizedRadius,
+                Color color,
+                int maxAlpha) {
+
+            int centerX = imageBounds.x
+                    + (int) Math.round(
+                            imageBounds.width * normalizedX);
+            int centerY = imageBounds.y
+                    + (int) Math.round(
+                            imageBounds.height * normalizedY);
+            int radius = (int) Math.round(
+                    imageBounds.width * normalizedRadius);
+
+            int rings = 12;
+
+            for (int i = rings; i >= 1; i--) {
+                double ratio = i / (double) rings;
+                int currentRadius =
+                        (int) Math.round(radius * ratio);
+                int alpha =
+                        (int) Math.round(
+                                maxAlpha * (1.0 - ratio) + 2);
+
+                g2.setColor(new Color(
+                        color.getRed(),
+                        color.getGreen(),
+                        color.getBlue(),
+                        Math.min(maxAlpha, alpha)
+                ));
+
+                g2.fill(new Ellipse2D.Double(
+                        centerX - currentRadius,
+                        centerY - currentRadius,
+                        currentRadius * 2.0,
+                        currentRadius * 2.0
+                ));
+            }
+        }
+
+        private void paintDust(
+                Graphics2D g2,
+                Rectangle imageBounds) {
+
+            for (DustParticle particle : dustParticles) {
+                double driftX =
+                        Math.sin(
+                                lightPhase * 0.35
+                              + particle.phase
+                        ) * 0.012 * particle.speed;
+
+                double driftY =
+                        Math.cos(
+                                lightPhase * 0.22
+                              + particle.phase
+                        ) * 0.008 * particle.speed;
+
+                double x = particle.x + driftX;
+                double y = particle.y + driftY;
+
+                x = x - Math.floor(x);
+                y = y - Math.floor(y);
+
+                int px = imageBounds.x
+                        + (int) Math.round(
+                                imageBounds.width * x);
+                int py = imageBounds.y
+                        + (int) Math.round(
+                                imageBounds.height * y);
+
+                int alpha = (int) Math.round(
+                        18 + 35 * particle.opacity);
+
+                g2.setColor(new Color(
+                        255, 230, 177, alpha));
+
+                double size = particle.size;
+
+                g2.fill(new Ellipse2D.Double(
+                        px, py, size, size));
+            }
+        }
+
+        private void paintVignette(
+                Graphics2D g2,
+                Rectangle imageBounds) {
+
+            int steps = 12;
+
+            for (int i = 0; i < steps; i++) {
+                int insetX = (int) Math.round(
+                        imageBounds.width * i * 0.009);
+                int insetY = (int) Math.round(
+                        imageBounds.height * i * 0.009);
+
+                int alpha = 10 + i * 5;
+
+                g2.setColor(new Color(0, 0, 0, alpha));
+                g2.setStroke(new BasicStroke(
+                        Math.max(2f,
+                                imageBounds.width * 0.012f)));
+
+                g2.drawRect(
+                        imageBounds.x + insetX,
+                        imageBounds.y + insetY,
+                        Math.max(0,
+                                imageBounds.width - insetX * 2),
+                        Math.max(0,
+                                imageBounds.height - insetY * 2)
+                );
+            }
+        }
+
         @Override
         public void doLayout() {
             Rectangle imageBounds = getImageBounds();
 
             for (HotspotSpec hotspot : hotspots) {
-                int x = imageBounds.x
-                        + (int) Math.round(
-                                imageBounds.width * hotspot.x
-                        );
+                double parallaxStrength =
+                        0.004 + hotspot.depth * 0.017;
 
-                int y = imageBounds.y
-                        + (int) Math.round(
-                                imageBounds.height * hotspot.y
-                        );
+                int parallaxX = (int) Math.round(
+                        cameraX
+                      * imageBounds.width
+                      * parallaxStrength
+                );
+
+                int parallaxY = (int) Math.round(
+                        cameraY
+                      * imageBounds.height
+                      * parallaxStrength
+                );
+
+                double breathing =
+                        1.0
+                      + hotspot.button.getBreathingScale()
+                      * (0.004 + hotspot.depth * 0.008);
 
                 int width = (int) Math.round(
-                        imageBounds.width * hotspot.width
+                        imageBounds.width
+                      * hotspot.width
+                      * breathing
                 );
 
                 int height = (int) Math.round(
-                        imageBounds.height * hotspot.height
+                        imageBounds.height
+                      * hotspot.height
+                      * breathing
                 );
 
+                int centerX = imageBounds.x
+                        + (int) Math.round(
+                                imageBounds.width
+                              * (hotspot.x + hotspot.width / 2.0))
+                        + parallaxX;
+
+                int centerY = imageBounds.y
+                        + (int) Math.round(
+                                imageBounds.height
+                              * (hotspot.y + hotspot.height / 2.0))
+                        + parallaxY;
+
                 hotspot.button.setBounds(
-                        x,
-                        y,
+                        centerX - width / 2,
+                        centerY - height / 2,
                         width,
                         height
                 );
             }
 
-            /*
-             * HUD 放在圖片右下方的地毯區域，
-             * 避免遮住便條紙、密碼盒和主要物件。
-             */
             if (hudPanel != null) {
                 int hudX = imageBounds.x
                         + (int) Math.round(
-                                imageBounds.width * 0.585
-                        );
-
+                                imageBounds.width * 0.575);
                 int hudY = imageBounds.y
                         + (int) Math.round(
-                                imageBounds.height * 0.785
-                        );
-
+                                imageBounds.height * 0.765);
                 int hudWidth = (int) Math.round(
-                        imageBounds.width * 0.395
-                );
-
+                        imageBounds.width * 0.405);
                 int hudHeight = (int) Math.round(
-                        imageBounds.height * 0.190
-                );
+                        imageBounds.height * 0.210);
+
+                int pulseOffset =
+                        (int) Math.round(hudPulse * 4.0);
 
                 hudPanel.setBounds(
-                        hudX,
-                        hudY,
-                        hudWidth,
-                        hudHeight
+                        hudX - pulseOffset,
+                        hudY - pulseOffset,
+                        hudWidth + pulseOffset * 2,
+                        hudHeight + pulseOffset * 2
                 );
             }
+
+            if (titlePanel != null) {
+                int titleX = imageBounds.x
+                        + (int) Math.round(
+                                imageBounds.width * 0.025);
+                int titleY = imageBounds.y
+                        + (int) Math.round(
+                                imageBounds.height * 0.025);
+                int titleWidth = (int) Math.round(
+                        imageBounds.width * 0.245);
+                int titleHeight = (int) Math.round(
+                        imageBounds.height * 0.090);
+
+                titlePanel.setBounds(
+                        titleX,
+                        titleY,
+                        titleWidth,
+                        titleHeight
+                );
+            }
+
+            if (controlPanel != null) {
+                int controlWidth = (int) Math.round(
+                        imageBounds.width * 0.205);
+                int controlHeight = (int) Math.round(
+                        imageBounds.height * 0.075);
+                int controlX = imageBounds.x
+                        + imageBounds.width
+                        - controlWidth
+                        - (int) Math.round(
+                                imageBounds.width * 0.025);
+                int controlY = imageBounds.y
+                        + (int) Math.round(
+                                imageBounds.height * 0.025);
+
+                controlPanel.setBounds(
+                        controlX,
+                        controlY,
+                        controlWidth,
+                        controlHeight
+                );
+            }
+
+            foregroundOverlay.setBounds(
+                    0, 0, getWidth(), getHeight());
         }
 
-        /**
-         * 依照原圖比例計算圖片顯示範圍。
-         *
-         * 即使 JFrame 改變大小，圖片也不會被拉扁。
-         */
+        private Rectangle getCameraImageBounds(
+                Rectangle imageBounds,
+                double overscan) {
+
+            int extraWidth = (int) Math.round(
+                    imageBounds.width * overscan);
+            int extraHeight = (int) Math.round(
+                    imageBounds.height * overscan);
+
+            int shiftX = (int) Math.round(
+                    -cameraX * extraWidth * 0.60);
+            int shiftY = (int) Math.round(
+                    -cameraY * extraHeight * 0.60);
+
+            return new Rectangle(
+                    imageBounds.x - extraWidth + shiftX,
+                    imageBounds.y - extraHeight + shiftY,
+                    imageBounds.width + extraWidth * 2,
+                    imageBounds.height + extraHeight * 2
+            );
+        }
+
         private Rectangle getImageBounds() {
             int panelWidth = getWidth();
             int panelHeight = getHeight();
@@ -980,12 +1282,11 @@ public class LibraryGamePage extends JFrame {
             }
 
             double imageRatio =
-                    (double) backgroundImage.getWidth()
-                    / backgroundImage.getHeight();
+                    backgroundImage.getWidth()
+                    / (double) backgroundImage.getHeight();
 
             double panelRatio =
-                    (double) panelWidth
-                    / panelHeight;
+                    panelWidth / (double) panelHeight;
 
             int drawWidth;
             int drawHeight;
@@ -993,65 +1294,274 @@ public class LibraryGamePage extends JFrame {
             int drawY;
 
             if (panelRatio > imageRatio) {
-                /*
-                 * 面板比較寬，左右留黑邊。
-                 */
                 drawHeight = panelHeight;
-
                 drawWidth = (int) Math.round(
-                        drawHeight * imageRatio
-                );
-
+                        drawHeight * imageRatio);
                 drawX = (panelWidth - drawWidth) / 2;
                 drawY = 0;
-
             } else {
-                /*
-                 * 面板比較高，上下留黑邊。
-                 */
                 drawWidth = panelWidth;
-
                 drawHeight = (int) Math.round(
-                        drawWidth / imageRatio
-                );
-
+                        drawWidth / imageRatio);
                 drawX = 0;
                 drawY = (panelHeight - drawHeight) / 2;
             }
 
             return new Rectangle(
-                    drawX,
-                    drawY,
-                    drawWidth,
-                    drawHeight
-            );
+                    drawX, drawY, drawWidth, drawHeight);
+        }
+
+        private static double clamp(
+                double value,
+                double minimum,
+                double maximum) {
+
+            return Math.max(
+                    minimum,
+                    Math.min(maximum, value));
+        }
+
+        /**
+         * 顯示選用透明前景圖。
+         * contains() 永遠回傳 false，避免擋住熱區點擊。
+         */
+        private final class ForegroundOverlay
+                extends JComponent {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean contains(int x, int y) {
+                return false;
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                if (foregroundImage == null) {
+                    return;
+                }
+
+                Rectangle imageBounds = getImageBounds();
+                Rectangle cameraBounds =
+                        getCameraImageBounds(imageBounds, 0.012);
+
+                Graphics2D g2 = createQualityGraphics(g);
+                g2.setComposite(
+                        AlphaComposite.SrcOver.derive(0.98f));
+
+                g2.drawImage(
+                        foregroundImage,
+                        cameraBounds.x,
+                        cameraBounds.y,
+                        cameraBounds.width,
+                        cameraBounds.height,
+                        null
+                );
+
+                g2.dispose();
+            }
         }
     }
 
     /**
-     * 儲存一個熱區的相對位置。
+     * 透明互動熱區，加入懸停發光與點擊波紋。
      */
-    private static class HotspotSpec {
+    private static final class HotspotButton extends JButton {
 
-        private final JButton button;
+        private static final long serialVersionUID = 1L;
 
+        private final String objectName;
+        private final Runnable action;
+
+        private boolean hovered;
+        private double hoverProgress;
+        private double clickProgress;
+        private double phase;
+
+        HotspotButton(
+                String objectName,
+                Runnable action) {
+
+            this.objectName = objectName;
+            this.action = action;
+
+            setUI(new BasicButtonUI());
+            setName(objectName);
+            getAccessibleContext()
+                    .setAccessibleName(objectName);
+            setToolTipText(objectName);
+
+            setCursor(Cursor.getPredefinedCursor(
+                    Cursor.HAND_CURSOR));
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setOpaque(false);
+            setFocusable(false);
+
+            if (SHOW_HOTSPOT_BORDERS) {
+                setBorder(BorderFactory.createLineBorder(
+                        Color.RED, 2));
+                setBorderPainted(true);
+            } else {
+                setBorderPainted(false);
+            }
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent event) {
+                    hovered = true;
+                }
+
+                @Override
+                public void mouseExited(MouseEvent event) {
+                    hovered = false;
+                }
+
+                @Override
+                public void mousePressed(MouseEvent event) {
+                    clickProgress = 1.0;
+                }
+            });
+
+            addActionListener(event -> action.run());
+        }
+
+        void advanceAnimation() {
+            double target = hovered ? 1.0 : 0.0;
+            hoverProgress +=
+                    (target - hoverProgress) * 0.18;
+            clickProgress =
+                    Math.max(0.0, clickProgress - 0.085);
+            phase += 0.075;
+        }
+
+        double getBreathingScale() {
+            return hoverProgress
+                    * (0.5 + Math.sin(phase) * 0.5);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (hoverProgress <= 0.015
+                    && clickProgress <= 0.015) {
+                return;
+            }
+
+            Graphics2D g2 = createQualityGraphics(g);
+
+            int arc = Math.max(
+                    10,
+                    Math.min(getWidth(), getHeight()) / 3);
+
+            if (hoverProgress > 0.015) {
+                int outerAlpha =
+                        (int) Math.round(
+                                85 * hoverProgress);
+                int innerAlpha =
+                        (int) Math.round(
+                                38 * hoverProgress);
+
+                g2.setColor(new Color(
+                        255, 210, 112, innerAlpha));
+                g2.fill(new RoundRectangle2D.Double(
+                        1, 1,
+                        Math.max(0, getWidth() - 3),
+                        Math.max(0, getHeight() - 3),
+                        arc, arc
+                ));
+
+                g2.setColor(new Color(
+                        255, 225, 150, outerAlpha));
+                g2.setStroke(new BasicStroke(
+                        1.3f + (float) hoverProgress * 1.7f));
+
+                g2.draw(new RoundRectangle2D.Double(
+                        2, 2,
+                        Math.max(0, getWidth() - 5),
+                        Math.max(0, getHeight() - 5),
+                        arc, arc
+                ));
+            }
+
+            if (clickProgress > 0.015) {
+                double inverse = 1.0 - clickProgress;
+                double diameter =
+                        Math.max(getWidth(), getHeight())
+                      * (0.25 + inverse * 1.10);
+
+                int alpha =
+                        (int) Math.round(
+                                130 * clickProgress);
+
+                g2.setColor(new Color(
+                        255, 232, 170, alpha));
+                g2.setStroke(new BasicStroke(2.0f));
+
+                g2.draw(new Ellipse2D.Double(
+                        getWidth() / 2.0 - diameter / 2.0,
+                        getHeight() / 2.0 - diameter / 2.0,
+                        diameter,
+                        diameter
+                ));
+            }
+
+            g2.dispose();
+        }
+
+        @Override
+        public String toString() {
+            return objectName;
+        }
+    }
+
+    private static final class HotspotSpec {
+
+        private final HotspotButton button;
         private final double x;
         private final double y;
         private final double width;
         private final double height;
+        private final double depth;
 
-        public HotspotSpec(
-                JButton button,
+        HotspotSpec(
+                HotspotButton button,
                 double x,
                 double y,
                 double width,
-                double height) {
+                double height,
+                double depth) {
 
             this.button = button;
             this.x = x;
             this.y = y;
             this.width = width;
             this.height = height;
+            this.depth = depth;
+        }
+    }
+
+    private static final class DustParticle {
+
+        private final double x;
+        private final double y;
+        private final double size;
+        private final double phase;
+        private final double speed;
+        private final double opacity;
+
+        DustParticle(
+                double x,
+                double y,
+                double size,
+                double phase,
+                double speed) {
+
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.phase = phase;
+            this.speed = speed;
+            this.opacity = 0.45 + speed * 0.35;
         }
     }
 }

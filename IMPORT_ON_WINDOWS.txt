@@ -1,0 +1,20 @@
+PuzzleGamePlatform Phase 2 - Windows 匯入與執行
+
+1. 解壓縮 ZIP，請勿直接在 ZIP 內執行。
+2. 確認 MySQL 已啟動，Schema 名稱為 puzzlegame。
+3. DbConnection 已設定：
+   USER=root
+   PASSWORD=1234
+4. Eclipse：
+   File > Import > Maven > Existing Maven Projects
+   選擇本資料夾後完成匯入。
+5. 右鍵專案 > Maven > Update Project。
+6. 先執行 controller.Application 測試。
+7. 管理員登入：
+   account=admin
+   password=Admin@1234
+8. 產生 JAR：雙擊 BUILD_PHASE2_WINDOWS.bat
+9. 執行 JAR：雙擊 RUN_PHASE2_WINDOWS.bat
+
+若既有 Phase 1 資料庫正常，只需在 MySQL Workbench 執行：
+database/puzzlegameplatform_phase2_upgrade.sql

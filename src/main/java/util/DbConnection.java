@@ -12,7 +12,7 @@ public final class DbConnection {
           + "&allowPublicKeyRetrieval=true";
 
     private static final String USER = "root";
-    private static final String PASSWORD = "your MySQL PASSWORD";
+    private static final String PASSWORD = "1234";
 
     private DbConnection() {
     }

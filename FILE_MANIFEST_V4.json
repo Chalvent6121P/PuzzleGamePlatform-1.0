@@ -1,0 +1,566 @@
+[
+  {
+    "path": ".classpath",
+    "bytes": 1568
+  },
+  {
+    "path": ".project",
+    "bytes": 570
+  },
+  {
+    "path": ".settings/org.eclipse.core.resources.prefs",
+    "bytes": 185
+  },
+  {
+    "path": ".settings/org.eclipse.jdt.core.prefs",
+    "bytes": 417
+  },
+  {
+    "path": ".settings/org.eclipse.m2e.core.prefs",
+    "bytes": 90
+  },
+  {
+    "path": "BUILD_PHASE2_WINDOWS.bat",
+    "bytes": 324
+  },
+  {
+    "path": "BUILD_VERIFICATION_V4.txt",
+    "bytes": 1304
+  },
+  {
+    "path": "GAMEPLAY_ENHANCEMENT_VERIFICATION.txt",
+    "bytes": 940
+  },
+  {
+    "path": "IMPORT_ON_MAC.txt",
+    "bytes": 745
+  },
+  {
+    "path": "IMPORT_ON_WINDOWS.txt",
+    "bytes": 695
+  },
+  {
+    "path": "PHASE1_README.md",
+    "bytes": 1333
+  },
+  {
+    "path": "PHASE2_README.md",
+    "bytes": 5782
+  },
+  {
+    "path": "PHASE2_VERIFICATION.txt",
+    "bytes": 964
+  },
+  {
+    "path": "README_2_5D_V3.md",
+    "bytes": 1610
+  },
+  {
+    "path": "README_2_5D_V4.md",
+    "bytes": 1243
+  },
+  {
+    "path": "RUN_PHASE2_WINDOWS.bat",
+    "bytes": 294
+  },
+  {
+    "path": "TEXT_AND_ACHIEVEMENT_UPDATE_VERIFICATION.txt",
+    "bytes": 1049
+  },
+  {
+    "path": "V4_UI_FUNCTION_FIXES.txt",
+    "bytes": 508
+  },
+  {
+    "path": "database/puzzlegameplatform_phase1_full.sql",
+    "bytes": 28833
+  },
+  {
+    "path": "database/puzzlegameplatform_phase1_upgrade.sql",
+    "bytes": 6570
+  },
+  {
+    "path": "database/puzzlegameplatform_phase2_full.sql",
+    "bytes": 27717
+  },
+  {
+    "path": "database/puzzlegameplatform_phase2_gameplay_upgrade.sql",
+    "bytes": 5328
+  },
+  {
+    "path": "database/puzzlegameplatform_phase2_upgrade.sql",
+    "bytes": 1216
+  },
+  {
+    "path": "docs/MAJOR_CHANGES_2_5D_V3.md",
+    "bytes": 1979
+  },
+  {
+    "path": "docs/approved_game_screens/clock_tower_2_5d_ui.png",
+    "bytes": 2627539
+  },
+  {
+    "path": "docs/approved_game_screens/hospital_2_5d_ui.png",
+    "bytes": 2808543
+  },
+  {
+    "path": "docs/approved_game_screens/laboratory_2_5d_ui.png",
+    "bytes": 3485975
+  },
+  {
+    "path": "docs/approved_game_screens/mirror_hotel_2_5d_ui.png",
+    "bytes": 2842874
+  },
+  {
+    "path": "pom.xml",
+    "bytes": 2434
+  },
+  {
+    "path": "puzzlegameplatform_phase2_gameplay_upgrade.sql",
+    "bytes": 5328
+  },
+  {
+    "path": "src/main/java/controller/Application.java",
+    "bytes": 490
+  },
+  {
+    "path": "src/main/java/controller/GameMainPage.java",
+    "bytes": 11290
+  },
+  {
+    "path": "src/main/java/controller/LoginPage.java",
+    "bytes": 9741
+  },
+  {
+    "path": "src/main/java/controller/RegisterPage.java",
+    "bytes": 9639
+  },
+  {
+    "path": "src/main/java/controller/admin/AdminMainPage.java",
+    "bytes": 8355
+  },
+  {
+    "path": "src/main/java/controller/admin/AdminStyle.java",
+    "bytes": 3612
+  },
+  {
+    "path": "src/main/java/controller/admin/GameManagementPage.java",
+    "bytes": 28970
+  },
+  {
+    "path": "src/main/java/controller/admin/PlayerManagementPage.java",
+    "bytes": 17485
+  },
+  {
+    "path": "src/main/java/controller/admin/ReportCenterPage.java",
+    "bytes": 16426
+  },
+  {
+    "path": "src/main/java/controller/games/ClockTowerGamePage.java",
+    "bytes": 489
+  },
+  {
+    "path": "src/main/java/controller/games/HospitalGamePage.java",
+    "bytes": 481
+  },
+  {
+    "path": "src/main/java/controller/games/LaboratoryGamePage.java",
+    "bytes": 489
+  },
+  {
+    "path": "src/main/java/controller/games/LibraryGamePage.java",
+    "bytes": 48044
+  },
+  {
+    "path": "src/main/java/controller/games/MirrorHotelGamePage.java",
+    "bytes": 493
+  },
+  {
+    "path": "src/main/java/controller/games/common/BackpackDialog.java",
+    "bytes": 6837
+  },
+  {
+    "path": "src/main/java/controller/games/story/StoryPuzzleGamePage.java",
+    "bytes": 47368
+  },
+  {
+    "path": "src/main/java/controller/player/PlayerAchievementDialog.java",
+    "bytes": 14607
+  },
+  {
+    "path": "src/main/java/dao/AchievementDao.java",
+    "bytes": 663
+  },
+  {
+    "path": "src/main/java/dao/EndingDao.java",
+    "bytes": 440
+  },
+  {
+    "path": "src/main/java/dao/GameDao.java",
+    "bytes": 246
+  },
+  {
+    "path": "src/main/java/dao/InventoryDao.java",
+    "bytes": 577
+  },
+  {
+    "path": "src/main/java/dao/ItemDao.java",
+    "bytes": 416
+  },
+  {
+    "path": "src/main/java/dao/PlayerAchievementDao.java",
+    "bytes": 709
+  },
+  {
+    "path": "src/main/java/dao/PlayerDao.java",
+    "bytes": 416
+  },
+  {
+    "path": "src/main/java/dao/PlayerGameRecordDao.java",
+    "bytes": 706
+  },
+  {
+    "path": "src/main/java/dao/PuzzleDao.java",
+    "bytes": 541
+  },
+  {
+    "path": "src/main/java/dao/PuzzleRecordDao.java",
+    "bytes": 499
+  },
+  {
+    "path": "src/main/java/dao/ReportDao.java",
+    "bytes": 225
+  },
+  {
+    "path": "src/main/java/dao/RoomDao.java",
+    "bytes": 390
+  },
+  {
+    "path": "src/main/java/dao/SaveGameDao.java",
+    "bytes": 355
+  },
+  {
+    "path": "src/main/java/dao/impl/AchievementDaoImpl.java",
+    "bytes": 5152
+  },
+  {
+    "path": "src/main/java/dao/impl/EndingDaoImpl.java",
+    "bytes": 3283
+  },
+  {
+    "path": "src/main/java/dao/impl/GameDaoImpl.java",
+    "bytes": 4239
+  },
+  {
+    "path": "src/main/java/dao/impl/InventoryDaoImpl.java",
+    "bytes": 4229
+  },
+  {
+    "path": "src/main/java/dao/impl/ItemDaoImpl.java",
+    "bytes": 3166
+  },
+  {
+    "path": "src/main/java/dao/impl/PlayerAchievementDaoImpl.java",
+    "bytes": 5569
+  },
+  {
+    "path": "src/main/java/dao/impl/PlayerDaoImpl.java",
+    "bytes": 7834
+  },
+  {
+    "path": "src/main/java/dao/impl/PlayerGameRecordDaoImpl.java",
+    "bytes": 5839
+  },
+  {
+    "path": "src/main/java/dao/impl/PuzzleDaoImpl.java",
+    "bytes": 4085
+  },
+  {
+    "path": "src/main/java/dao/impl/PuzzleRecordDaoImpl.java",
+    "bytes": 3397
+  },
+  {
+    "path": "src/main/java/dao/impl/ReportDaoImpl.java",
+    "bytes": 3987
+  },
+  {
+    "path": "src/main/java/dao/impl/RoomDaoImpl.java",
+    "bytes": 3313
+  },
+  {
+    "path": "src/main/java/dao/impl/SaveGameDaoImpl.java",
+    "bytes": 3392
+  },
+  {
+    "path": "src/main/java/entity/Achievement.java",
+    "bytes": 1370
+  },
+  {
+    "path": "src/main/java/entity/Ending.java",
+    "bytes": 1210
+  },
+  {
+    "path": "src/main/java/entity/Game.java",
+    "bytes": 1786
+  },
+  {
+    "path": "src/main/java/entity/GameRecordReportRow.java",
+    "bytes": 2414
+  },
+  {
+    "path": "src/main/java/entity/Inventory.java",
+    "bytes": 953
+  },
+  {
+    "path": "src/main/java/entity/Item.java",
+    "bytes": 1144
+  },
+  {
+    "path": "src/main/java/entity/Player.java",
+    "bytes": 2293
+  },
+  {
+    "path": "src/main/java/entity/PlayerAchievement.java",
+    "bytes": 1063
+  },
+  {
+    "path": "src/main/java/entity/PlayerAchievementRecord.java",
+    "bytes": 1828
+  },
+  {
+    "path": "src/main/java/entity/PlayerGameRecord.java",
+    "bytes": 2443
+  },
+  {
+    "path": "src/main/java/entity/Puzzle.java",
+    "bytes": 1558
+  },
+  {
+    "path": "src/main/java/entity/PuzzleRecord.java",
+    "bytes": 1416
+  },
+  {
+    "path": "src/main/java/entity/ReportSummary.java",
+    "bytes": 1317
+  },
+  {
+    "path": "src/main/java/entity/Room.java",
+    "bytes": 1120
+  },
+  {
+    "path": "src/main/java/entity/SaveGame.java",
+    "bytes": 1606
+  },
+  {
+    "path": "src/main/java/service/AdminReportService.java",
+    "bytes": 234
+  },
+  {
+    "path": "src/main/java/service/GameService.java",
+    "bytes": 246
+  },
+  {
+    "path": "src/main/java/service/PlayerAchievementService.java",
+    "bytes": 201
+  },
+  {
+    "path": "src/main/java/service/PlayerService.java",
+    "bytes": 425
+  },
+  {
+    "path": "src/main/java/service/engine/GameEngine.java",
+    "bytes": 380
+  },
+  {
+    "path": "src/main/java/service/impl/AdminReportServiceImpl.java",
+    "bytes": 566
+  },
+  {
+    "path": "src/main/java/service/impl/GameServiceImpl.java",
+    "bytes": 2415
+  },
+  {
+    "path": "src/main/java/service/impl/PlayerAchievementServiceImpl.java",
+    "bytes": 695
+  },
+  {
+    "path": "src/main/java/service/impl/PlayerServiceImpl.java",
+    "bytes": 4780
+  },
+  {
+    "path": "src/main/java/service/impl/engine/AbstractGameEngine.java",
+    "bytes": 4163
+  },
+  {
+    "path": "src/main/java/service/impl/engine/LibraryGameEngine.java",
+    "bytes": 4159
+  },
+  {
+    "path": "src/main/java/service/impl/engine/story/GameDefinitions.java",
+    "bytes": 11878
+  },
+  {
+    "path": "src/main/java/service/impl/engine/story/StoryGameDefinition.java",
+    "bytes": 2289
+  },
+  {
+    "path": "src/main/java/service/impl/engine/story/StoryGameEngine.java",
+    "bytes": 3929
+  },
+  {
+    "path": "src/main/java/service/impl/engine/story/StoryPuzzle.java",
+    "bytes": 1605
+  },
+  {
+    "path": "src/main/java/test/LibraryGameEngineTest.java",
+    "bytes": 848
+  },
+  {
+    "path": "src/main/java/util/DbConnection.java",
+    "bytes": 960
+  },
+  {
+    "path": "src/main/java/util/ReportExporter.java",
+    "bytes": 14557
+  },
+  {
+    "path": "src/main/java/util/SoundPlayer.java",
+    "bytes": 1901
+  },
+  {
+    "path": "src/main/resources/images/Login/LoginPage.png",
+    "bytes": 2156378
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/clock_tower_2_5d_ui.png",
+    "bytes": 2627539
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/hospital_2_5d_ui.png",
+    "bytes": 2808543
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/laboratory_2_5d_ui.png",
+    "bytes": 3485975
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/layers/clock_tower_foreground.png",
+    "bytes": 992057
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/layers/hospital_foreground.png",
+    "bytes": 1098740
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/layers/laboratory_foreground.png",
+    "bytes": 689465
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/layers/mirror_hotel_foreground.png",
+    "bytes": 950907
+  },
+  {
+    "path": "src/main/resources/images/games/cinematic/mirror_hotel_2_5d_ui.png",
+    "bytes": 2842874
+  },
+  {
+    "path": "src/main/resources/images/games/clock_tower.png",
+    "bytes": 3846507
+  },
+  {
+    "path": "src/main/resources/images/games/hospital.png",
+    "bytes": 2483666
+  },
+  {
+    "path": "src/main/resources/images/games/laboratory.png",
+    "bytes": 2338136
+  },
+  {
+    "path": "src/main/resources/images/games/mirror_hotel.png",
+    "bytes": 2297723
+  },
+  {
+    "path": "src/main/resources/images/library/library_scene.png",
+    "bytes": 3046255
+  },
+  {
+    "path": "src/main/resources/sounds/bag_open.wav",
+    "bytes": 33560
+  },
+  {
+    "path": "src/main/resources/sounds/book_open.wav",
+    "bytes": 40616
+  },
+  {
+    "path": "src/main/resources/sounds/box_click.wav",
+    "bytes": 11068
+  },
+  {
+    "path": "src/main/resources/sounds/box_open.wav",
+    "bytes": 33560
+  },
+  {
+    "path": "src/main/resources/sounds/clock_chime.wav",
+    "bytes": 97064
+  },
+  {
+    "path": "src/main/resources/sounds/correct_answer.wav",
+    "bytes": 38852
+  },
+  {
+    "path": "src/main/resources/sounds/door_unlock.wav",
+    "bytes": 46790
+  },
+  {
+    "path": "src/main/resources/sounds/drawer_open.wav",
+    "bytes": 55608
+  },
+  {
+    "path": "src/main/resources/sounds/elevator_open.wav",
+    "bytes": 86480
+  },
+  {
+    "path": "src/main/resources/sounds/gear_turn.wav",
+    "bytes": 79424
+  },
+  {
+    "path": "src/main/resources/sounds/hatch_open.wav",
+    "bytes": 99708
+  },
+  {
+    "path": "src/main/resources/sounds/item_select.wav",
+    "bytes": 13714
+  },
+  {
+    "path": "src/main/resources/sounds/medical_cabinet.wav",
+    "bytes": 39734
+  },
+  {
+    "path": "src/main/resources/sounds/mirror_shatter.wav",
+    "bytes": 88244
+  },
+  {
+    "path": "src/main/resources/sounds/mirror_whisper.wav",
+    "bytes": 70604
+  },
+  {
+    "path": "src/main/resources/sounds/paper_open.wav",
+    "bytes": 30912
+  },
+  {
+    "path": "src/main/resources/sounds/pressure_release.wav",
+    "bytes": 57374
+  },
+  {
+    "path": "src/main/resources/sounds/room_door.wav",
+    "bytes": 59138
+  },
+  {
+    "path": "src/main/resources/sounds/sonar_ping.wav",
+    "bytes": 105884
+  },
+  {
+    "path": "src/main/resources/sounds/wrong_answer.wav",
+    "bytes": 32678
+  }
+]

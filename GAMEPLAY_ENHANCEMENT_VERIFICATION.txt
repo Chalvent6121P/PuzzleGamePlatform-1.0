@@ -1,0 +1,21 @@
+PuzzleGamePlatform Phase 2 Gameplay Enhancement
+
+驗證項目：
+1. Java 11 相容編譯：通過
+2. 五個遊戲頁面降低對話區不透明度：完成
+3. 普通難度題目強化：鐘塔、病院完成
+4. 困難難度題目強化：實驗室、鏡廳完成
+5. 五個遊戲共用背包介面：完成
+6. 背包道具資訊／紙條內容顯示：完成
+7. inventory 與 item JOIN 查詢：完成
+8. 題目通關後自動寫入背包：完成
+9. WAV 音效資源與開關：完成
+10. Gameplay Upgrade SQL：完成
+11. Updated Full SQL：完成
+
+注意：
+- 執行程式前，既有 Phase 2 資料庫必須再執行
+  database/puzzlegameplatform_phase2_gameplay_upgrade.sql
+- 病院藥物分類題是虛構遊戲內容，不是醫療處置建議。
+- 此建置環境沒有 MySQL Server 與 Maven，因此無法進行真實資料庫連線測試或 fat JAR 打包；
+  所有 Java 原始碼已以 javac --release 11 完整編譯通過。

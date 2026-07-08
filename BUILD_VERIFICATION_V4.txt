@@ -1,0 +1,30 @@
+PuzzleGamePlatform 2.5D V4 Build Verification
+Generated: 2026-07-08
+
+[Requested fixes]
+- Clock tower duplicate lower-left clue button removed visually: PASS
+- Hospital duplicate lower-left clue button removed visually: PASS
+- Mirror hotel duplicate lower-left clue button removed visually: PASS
+- Duplicate lower-left clue hotspots removed from Java UI: PASS
+- Laboratory backpack formula square-box issue fixed by display normalization: PASS
+- SQL formula text updated to ASCII digits: PASS
+- Library backpack control added: PASS
+- Library return-to-lobby control added: PASS
+
+[Architecture]
+- Maven project structure preserved: PASS
+- DAO / Service / Entity / GameEngine layers preserved: PASS
+- Existing GameMainPage callback flow preserved: PASS
+- Java source compatibility target remains Java 11: PASS
+
+[Compilation]
+- javac --release 11 -encoding UTF-8: PASS
+- Java source files: 77
+- Generated class files during verification: 127
+- Maven command was not available in the verification container.
+- pom.xml remains configured for Maven Compiler + Shade plugins.
+- Expected Maven JAR: target/PuzzleGamePlatform-2.5D-V4.jar
+
+[Runtime limitation]
+- Live MySQL gameplay could not be executed in the verification container.
+- Database-backed behavior should be tested on the user's configured computer.

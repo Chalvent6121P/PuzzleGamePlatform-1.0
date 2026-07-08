@@ -1,0 +1,15 @@
+PuzzleGamePlatform — macOS / Eclipse 匯入方式
+
+1. 先將 ZIP 解壓縮，不要直接在 ZIP 裡執行專案。
+2. Eclipse：File > Import...
+3. 選 Maven > Existing Maven Projects。
+4. Root Directory 選到「PuzzleGamePlatform」資料夾（必須直接看得到 pom.xml）。
+5. Projects 清單勾選 com.chalvent:puzzle-game-platform:0.0.1-SNAPSHOT。
+6. Finish。
+7. 專案匯入後：右鍵專案 > Maven > Update Project。
+8. Project > Clean。
+9. 確認 Eclipse 使用 JDK 11。
+10. MySQL 密碼若不是 1234，請修改 src/main/java/util/DbConnection.java。
+
+若改用 General > Existing Projects into Workspace，也可以選解壓後的
+PuzzleGamePlatform 資料夾，因為本專案同時包含 .project 與 .classpath。

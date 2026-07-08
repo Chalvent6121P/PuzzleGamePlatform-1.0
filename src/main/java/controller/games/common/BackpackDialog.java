@@ -124,6 +124,31 @@ public final class BackpackDialog extends JDialog {
         }
     }
 
+    /**
+     * Microsoft JhengHei on some Windows installations does not contain
+     * Unicode subscript numerals, which causes formulas such as P₁V₁=P₂V₂
+     * to appear as square boxes. Convert those characters to universally
+     * supported plain digits before displaying the item description.
+     */
+    private static String normalizeDisplayText(String text) {
+        if (text == null) {
+            return "";
+        }
+
+        return text
+                .replace('₀', '0')
+                .replace('₁', '1')
+                .replace('₂', '2')
+                .replace('₃', '3')
+                .replace('₄', '4')
+                .replace('₅', '5')
+                .replace('₆', '6')
+                .replace('₇', '7')
+                .replace('₈', '8')
+                .replace('₉', '9')
+                .replace("P1V1=P2V2", "P1 × V1 = P2 × V2");
+    }
+
     private void showItem(Item item) {
         if (item == null) {
             return;
@@ -131,7 +156,8 @@ public final class BackpackDialog extends JDialog {
 
         String type = item.getItemType() == null ? "道具" : item.getItemType();
         String description = item.getDescription() == null
-                ? "沒有更多資訊。" : item.getDescription();
+                ? "沒有更多資訊。"
+                : normalizeDisplayText(item.getDescription());
 
         boolean paperLike = type.contains("紙")
                 || type.contains("提示")

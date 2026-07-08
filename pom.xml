@@ -23,7 +23,7 @@
     </dependencies>
 
     <build>
-        <finalName>PuzzleGamePlatform-Phase2</finalName>
+        <finalName>PuzzleGamePlatform-2.5D-V4</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -20,7 +20,7 @@ public final class GameDefinitions {
                 new Color(17, 26, 40),
                 new Color(61, 40, 31),
                 new Color(201, 161, 86),
-                "/images/games/clock_tower.png",
+                "/images/games/cinematic/clock_tower_2_5d_ui.png",
                 Arrays.asList(
                         new StoryPuzzle(
                                 3,
@@ -66,7 +66,7 @@ public final class GameDefinitions {
                 new Color(20, 36, 38),
                 new Color(42, 51, 54),
                 new Color(146, 199, 177),
-                "/images/games/hospital.png",
+                "/images/games/cinematic/hospital_2_5d_ui.png",
                 Arrays.asList(
                         new StoryPuzzle(
                                 6,
@@ -117,7 +117,7 @@ public final class GameDefinitions {
                 new Color(7, 27, 44),
                 new Color(11, 70, 84),
                 new Color(74, 196, 212),
-                "/images/games/laboratory.png",
+                "/images/games/cinematic/laboratory_2_5d_ui.png",
                 Arrays.asList(
                         new StoryPuzzle(
                                 9,
@@ -163,7 +163,7 @@ public final class GameDefinitions {
                 new Color(31, 20, 43),
                 new Color(78, 48, 69),
                 new Color(201, 170, 218),
-                "/images/games/mirror_hotel.png",
+                "/images/games/cinematic/mirror_hotel_2_5d_ui.png",
                 Arrays.asList(
                         new StoryPuzzle(
                                 12,
